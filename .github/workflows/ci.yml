@@ -15,14 +15,14 @@ jobs:
       matrix:
         os: [ubuntu-22.04, ubuntu-20.04]
     runs-on: ${{ matrix.os }}
-    name: ${{ matrix.os }} CI
+    name: ${{ matrix.os }}
     steps:
       - name: Install Dependencies
         run: |
-          apt update && apt install -y lsb-release wget gnupg tar
+          sudo apt update && sudo apt install -y lsb-release wget gnupg tar
           wget https://packages.osrfoundation.org/gazebo.gpg -O /usr/share/keyrings/pkgs-osrf-archive-keyring.gpg
-          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/pkgs-osrf-archive-keyring.gpg] http://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/gazebo-stable.list > /dev/null
-          apt update && apt install -y gz-garden
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/pkgs-osrf-archive-keyring.gpg] http://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/gazebo-stable.list > /dev/null
+          sudo apt update && sudo apt install -y gz-garden
 
       - name: Fetch and Build Chrono
         run: |
@@ -31,7 +31,7 @@ jobs:
           cd chrono-7.0.3
           cmake -B build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=/usr
           cmake --build build --config ${{env.BUILD_TYPE}}
-          cmake --install build
+          sudo cmake --install build
 
       - name: Checkout
         uses: actions/checkout@v3
