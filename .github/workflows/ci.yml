@@ -1,0 +1,48 @@
+name: Ubuntu CI
+
+on: 
+  push:
+    branches:
+      - 'main'
+  pull_request:
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-22.04, ubuntu-20.04]
+    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.os }}
+    steps:
+      - name: Install Dependencies
+        run: |
+          sudo apt update && sudo apt install -y lsb-release wget gnupg tar
+          wget https://packages.osrfoundation.org/gazebo.gpg -O /usr/share/keyrings/pkgs-osrf-archive-keyring.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/pkgs-osrf-archive-keyring.gpg] http://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/gazebo-stable.list > /dev/null
+          sudo apt update && sudo apt install -y gz-garden
+
+      - name: Fetch and Build Chrono
+        run: |
+          curl -fsSL https://github.com/projectchrono/chrono/archive/refs/tags/7.0.3.tar.gz -o chrono.tar.gz
+          tar xvf chrono.tar.gz
+          cd chrono-7.0.3
+          cmake -B build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=/usr
+          cmake --build build --config ${{env.BUILD_TYPE}}
+          sudo cmake --install build
+
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Configure CMake
+        run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+
+      - name: Build
+        run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+
+      - name: Test
+        working-directory: ${{github.workspace}}/build
+        run: ctest -C ${{env.BUILD_TYPE}}
+
